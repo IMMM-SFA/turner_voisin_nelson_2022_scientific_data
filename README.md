@@ -76,12 +76,9 @@ In Python:
     and Rocio Uria-Martinez. 2022. Existing Hydropower Assets, 2022.
     HydroSource. Oak Ridge National Laboratory, Oak Ridge, Tennessee,
     USA. <https://doi.org/10.21951/EHA_FY2022/1865282>
--   **NWIS**: U.S. Geological Survey, 2016, National Water Information
-    System data available on the World Wide Web (USGS Water Data for the
-    Nation), accessed \[April 10, 2022\] via R package
-    \[<http://waterdata.usgs.gov/nwis/>\].
 
-1.  Run the following R scripts in the main directory to re-create this
+
+3.  Run the following R scripts in the main directory to re-create this
     experiment:
 
 <table>
