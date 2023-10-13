@@ -1,13 +1,13 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6607825.svg)](https://doi.org/10.5281/zenodo.6607825)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8422075.svg)](https://doi.org/10.5281/zenodo.8422075)
 
 # RectifHyd—monthly generation estimates for 1,500 hydroelectric power plants in the United States
 
-Sean Turner<sup>1</sup>, Nathalie Voisin<sup>1</sup>, and Kristian
+Cameron Bracken<sup>1\*</sup>, Nathalie Voisin<sup>1</sup>, and Kristian
 Nelson<sup>1</sup>
 
 <sup>1 </sup> Pacific Northwest National Laboratory
 
-Contacts: <sean.turner@pnnl.gov>   <nathalie.voisin@pnnl.gov>
+\* Contacts: <cameron.bracken@pnnl.gov> <nathalie.voisin@pnnl.gov>
 
 ## Abstract
 
@@ -41,20 +41,21 @@ States. (In prep.)
 
 ## Data reference
 
-Turner, S., Voisin, N., & Nelson, K. (2022). RectifHyd (1.0) \[Data
-set\]. Zenodo. <https://doi.org/10.5281/zenodo.6607825>
+Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2023). RectifHyd
+(1.2.0) \[Data set\]. Zenodo. <https://doi.org/10.5281/zenodo.8422075>
 
 ### Data download
 
 In R:
 
-    readr::read_csv("https://zenodo.org/record/6607825/files/RectifHyd_v1.0.csv",
-                    comment = "##")
+    readr::read_csv("https://zenodo.org/record/8422075/files/RectifHyd_v1.2.0.csv",
+      comment = "##"
+    )
 
 In Python:
 
     import pandas as pd
-    pd.read_csv("https://zenodo.org/record/6607825/files/RectifHyd_v1.0.csv", comment = "#")
+    pd.read_csv("https://zenodo.org/record/8422075/files/RectifHyd_v1.2.0.csv", comment = "#")
 
 ### Reproduce RectifHyd
 
@@ -65,20 +66,23 @@ In Python:
 -   **ResOpsUS**: Steyaert, J., Condon, L., Turner, S. & Voisin, N.
     (2021). ResOpsUS \[Data set\]. Zenodo.
     <https://doi.org/10.5281/zenodo.5367383>
--   **EIA-923**: U.S. Energy Information Administration (2022).
+-   **EIA-923**: U.S. Energy Information Administration (2023).
     EIA-923/906/920. \[Data set\]. EIA.
     <https://www.eia.gov/electricity/data/eia923/> (all spreadsheets
-    2001 - 2020)
+    2001 - 2022)
 -   **HILARRI**: Hansen, C.H., and P.G. Matson. 2021. Hydropower
     Infrastructure - LAkes, Reservoirs, and Rivers (HILARRI). DOI:
     10.21951/HILARRI/1781642
 -   **Existing Hydropower Assets**: Megan M. Johnson, Shih-Chieh Kao,
-    and Rocio Uria-Martinez. 2022. Existing Hydropower Assets, 2022.
+    and Rocio Uria-Martinez. 2023. Existing Hydropower Assets, 2023.
     HydroSource. Oak Ridge National Laboratory, Oak Ridge, Tennessee,
-    USA. <https://doi.org/10.21951/EHA_FY2022/1865282>
+    USA. <https://doi.org/10.21951/EHA_FY2023/1972057>
+-   **NWIS**: U.S. Geological Survey, 2016, National Water Information
+    System data available on the World Wide Web (USGS Water Data for the
+    Nation), accessed \[September, 2023\] via R package
+    \[<http://waterdata.usgs.gov/nwis/>\].
 
-
-3.  Run the following R scripts in the main directory to re-create this
+1.  Run the following R scripts in the main directory to re-create this
     experiment:
 
 <table>
@@ -95,23 +99,32 @@ In Python:
 <tbody>
 <tr class="odd">
 <td><code>1. Process EIA spreadsheets.R</code></td>
-<td>Combine each of the last 20 years’ <code>EIA-923</code> data releases, extract hydropower net generation, output clean data table as .csv</td>
+<td>Combine each of the last 20 years’ <code>EIA-923</code> data
+releases, extract hydropower net generation, output clean data table as
+.csv</td>
 </tr>
 <tr class="even">
 <td><code>2a Disaggregate using ResOpsUS.R</code></td>
-<td>Prepare data to disaggregate annual hydropower using reservoir releases from <code>ResOpsUS</code></td>
+<td>Prepare data to disaggregate annual hydropower using reservoir
+releases from <code>ResOpsUS</code></td>
 </tr>
 <tr class="odd">
 <td><code>2b Disaggregate using USGS.R</code></td>
-<td>Prepare data to disaggregate annual hydropower using downstream flows</td>
+<td>Prepare data to disaggregate annual hydropower using downstream
+flows</td>
 </tr>
 <tr class="even">
 <td><code>3. Combine and compute new monthly generation.R</code></td>
-<td>Combine flow fraction tables and perform disaggregation of annual to monthly flow</td>
+<td>Combine flow fraction tables and perform disaggregation of annual to
+monthly flow</td>
+</tr>
+<tr class="odd">
+<td><code>4a. Create final file.R</code></td>
+<td>Clean up and prepare the final RectifHyd file</td>
 </tr>
 </tbody>
 </table>
 
 Enjoy!
 
-ST | NV | KN
+ST | NV | KN | CB

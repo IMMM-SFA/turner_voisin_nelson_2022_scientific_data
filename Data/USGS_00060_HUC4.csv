@@ -108,8 +108,8 @@ HUC4,USGS_ID,Type,CH_MW,n_plants,gap_in_record,Notes,OG_gage
 1301,08251500,Inland,0.31,1,No,NA,NA
 1302,08290000,Inland,23.69,3,No,NA,NA
 1303,08361000,Inland,27.9,1,No,NA,NA
-1303,08361000,Inland,75.6,2,No,NA,No gage found copy 1303
-1303,08361000,Coastal,31.5,1,No,NA,No gage found copy 1303
+1304,08361000,Inland,75.6,2,No,NA,No gage found copy 1303
+1305,08361000,Coastal,31.5,1,No,NA,No gage found copy 1303
 1401,09106150,Inland,59.733,17,No,NA,NA
 1402,09152500,Inland,323.2186,19,No,NA,NA
 1403,09180000,Inland,17.065,6,No,NA,NA
