@@ -48,14 +48,12 @@ Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2023). RectifHyd
 
 In R:
 
-    readr::read_csv("https://zenodo.org/record/8422075/files/RectifHyd_v1.2.0.csv",
-      comment = "##"
-    )
+    readr::read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
 
 In Python:
 
     import pandas as pd
-    pd.read_csv("https://zenodo.org/record/8422075/files/RectifHyd_v1.2.0.csv", comment = "#")
+    pd.read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
 
 ### Reproduce RectifHyd
 
