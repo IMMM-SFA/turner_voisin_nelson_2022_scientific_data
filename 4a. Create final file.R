@@ -36,7 +36,7 @@ read_csv("RectifHydv1.0_Q90_Spill_smoothed_SMOOTH_update_2022.csv") %>%
     year = as.integer(year)
   ) %>%
   mutate_if(is.double, function(x) round(x, 4)) %>%
-  write_csv("RectifHyd_v1.2.0.csv")
+  write_csv("RectifHyd_v1.2.1.csv")
 
 #
 # rectifhyd1 %>%
