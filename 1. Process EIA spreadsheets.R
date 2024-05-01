@@ -2,9 +2,11 @@
 ## Author: Sean Turner sean.turner@pnnl.gov
 ## EIA downloaded from: https://www.eia.gov/electricity/data/eia923/ (2022-03-17)
 ## Hydrosource data downloaded from https://hydrosource.ornl.gov/dataset/EHA2021 (2022-03-17)
+
 ## 2023 Update - Cameron Bracken cameron.bracken@pnnl.gov
-## EIA downloaded from: https://www.eia.gov/electricity/data/eia923/ (2023-10-04)
-## Hydrosource data downloaded from https://hydrosource.ornl.gov/dataset/EHA2023 (2023-08-17)
+##   EIA downloaded from: https://www.eia.gov/electricity/data/eia923/ (2023-10-04)
+##   Hydrosource data downloaded from https://hydrosource.ornl.gov/dataset/EHA2023 (2023-08-17)
+
 
 library(readxl) # read data from excel spreadsheets
 library(tidyverse) # data wrangling
@@ -14,7 +16,7 @@ import::from(janitor, clean_names)
 eha <- list(
   `2021` = "Data/ORNL_EHAHydro_Plant_FY2021/ORNL_EHAHydroPlant_FY2021_revised.xlsx",
   `2022` = "Data/ORNL_EHAHydro_Plant_FY2022/ORNL_EHAHydro_Plant_FY2022.xlsx",
-  `2023` = "Data/ORNL_EHAHydroPlant_FY2023/ORNL_EHAHydroPlant_PublicFY2023.xlsx"
+  `2023` = "Data/ORNL_EHAHydro_Plant_FY2023_rev/ORNL_EHAHydroPlant_FY2023_rev.xlsx"
 )
 read_xlsx(eha[["2023"]], sheet = "Operational") %>%
   select(EHA_PtID, plant = PtName, eia_id = EIA_PtID, State, CH_MW) %>%
@@ -98,7 +100,7 @@ EIA_IDs_desired <- hydrosource_EIA[["eia_id"]] %>% unique()
       )
     }
 
-    if (yr %in% 2008:2022) {
+    if (yr %in% 2008:2023) {
       if (yr %in% 2008:2010) {
         file_name <- paste0("Data/EIA-923/f923_", yr, "/EIA923 SCHEDULES ", yr, ".xls")
         read_xls(file_name, skip = 7) %>%
@@ -137,12 +139,10 @@ EIA_IDs_desired <- hydrosource_EIA[["eia_id"]] %>% unique()
 
 
       if (yr %in% 2021:2022) {
-        file_name <- paste0(
-          "Data/EIA-923/f923_", yr,
-          switch(as.character(yr),
-            `2021` = "/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx",
-            `2022` = "/EIA923_Schedules_2_3_4_5_M_12_2022_Final.xlsx"
-          )
+        file_name <- switch(as.character(yr),
+          `2021` = paste0("Data/EIA-923/f923_", yr, "/EIA923_Schedules_2_3_4_5_M_12_2021_Final_Revision.xlsx"),
+          `2022` = paste0("Data/EIA-923/f923_", yr, "/EIA923_Schedules_2_3_4_5_M_12_2022_Final.xlsx"),
+          `2023` = "Data/EIA-923/EIA923_Schedules_2_3_4_5_M_12_2023_22FEB2024.xlsx"
         )
         read_xlsx(file_name, skip = 5, guess_max = 10e5) %>%
           rename(eia_id = `Plant Id`) ->
@@ -159,6 +159,32 @@ EIA_IDs_desired <- hydrosource_EIA[["eia_id"]] %>% unique()
         EIA_rep_freq
       }
 
+      if (yr %in% 2023) {
+        file_name <- "Data/EIA-923/EIA923_Schedules_2_3_4_5_M_12_2023_22FEB2024.xlsx"
+        read_xlsx(file_name, skip = 5, guess_max = 10e5) %>%
+          rename(eia_id = `Plant Id`) ->
+        EIA_data
+
+        id_col_name <- "Plant Id"
+        rf_name <- "Reporting\r\nFrequency"
+
+        read_xlsx(file_name, skip = 3, sheet = "Page 6 Plant Frame") %>%
+          select(
+            # month = MONTH,
+            eia_id = one_of(id_col_name),
+            freq = one_of(rf_name)
+          ) %>%
+          # 2023 has monthly values
+          distinct(eia_id, .keep_all = T) ->
+        EIA_rep_freq
+
+        # check if all monthly reporting frequencies are the same, they are in 2023
+        # EIA_rep_freq |>
+        #   group_by(eia_id) |>
+        #   summarise(all_same = (length(unique(freq)) == 1)) |>
+        #   filter(!all_same)
+      }
+
       # filter EIA file for hydro
       EIA_data %>%
         clean_names() %>%
@@ -172,7 +198,7 @@ EIA_IDs_desired <- hydrosource_EIA[["eia_id"]] %>% unique()
       # fix col names
       names(EIA_hydro) <- names(EIA_hydro) %>% substr(1, 10)
 
-      if (yr == 2022) {
+      if (yr %in% 2022:2023) {
         EIA_hydro %>%
           mutate_if(is.character, function(x) as.numeric(gsub("^\\.", "", x))) %>%
           group_by(eia_id) %>%
@@ -200,6 +226,7 @@ eha_exclude <- hydrosource_EIA |>
   filter(n > 1) |>
   pull(eia_id)
 # distinct(eia_id, .keep_all=TRUE)
+# hydrosource_EIA |> filter(eia_id %in% eha_exclude) |> print(n=100)
 
 # check that annual totals correspond to reported annual
 EIA_hydro_netgen_and_freq %>%
@@ -218,12 +245,13 @@ EIA_hydro_netgen_and_freq %>%
 
 EIA_hydro_netgen_and_freq %>%
   filter(!(eia_id %in% eha_exclude)) |>
-  # arrange(eia_id, year) %>%
   left_join(hydrosource_EIA, by = "eia_id") %>%
   rename(
     netgen_annual = `net_genera`,
     state = State, nameplate_MW = CH_MW
   ) %>%
+  arrange(eia_id, year) %>%
+  relocate(eia_id, EHA_PtID, year, plant, state, nameplate_MW, freq, netgen_annual) %>%
   readr::write_csv("Output_1_EIA_MWh.csv")
 
 # should I figure out which of the plants in the earlier period 2001 -
