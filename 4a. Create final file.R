@@ -29,7 +29,7 @@ read_csv("RectifHydv1.0_Q90_Spill_smoothed_SMOOTH_update_2022.csv") %>%
     EIA_ID, plant, state, year, month, EIA_obs_freq,
     RectifHyd_method, EIA_fraction, EIA_MWh,
     RectifHyd_fraction, RectifHyd_MWh,
-    recommended_data
+    recommended_data, smoothed, scaled, imputed
   ) %>%
   mutate(recommended_data = if_else(recommended_data == "hydro923plus",
     "RectifHyd", recommended_data
@@ -38,8 +38,10 @@ read_csv("RectifHydv1.0_Q90_Spill_smoothed_SMOOTH_update_2022.csv") %>%
     EIA_ID = as.integer(EIA_ID),
     year = as.integer(year)
   ) %>%
-  mutate_if(is.double, function(x) round(x, 4)) %>%
-  write_csv(final_file)
+  mutate_if(is.double, function(x) round(x, 4)) ->
+rectifhyd
+
+rectifhyd |> write_csv(final_file)
 
 rectifhyd_long <- bind_rows(
   read_csv("RectifHyd_v1.3.csv") |> mutate(version = "1.3.0"),

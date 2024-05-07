@@ -107,7 +107,9 @@ eia_raw <- read_csv("Output_1_EIA_MWh.csv")
 
 eia_missing <- eia_raw |>
   pivot_longer(-c(eia_id, EHA_PtID, year, plant, state, nameplate_MW, freq, netgen_annual)) |>
-  filter(is.na(value))
+  filter(is.na(value)) |>
+  select(eia_id, EHA_PtID, year, month = name) |>
+  mutate(imputed = TRUE)
 
 month_num <- 1:12 |> `names<-`(month.abb)
 
@@ -267,7 +269,8 @@ combined_data_with_PNNL_calcs %>%
     PNNL_MWh = netgen_annual * fraction,
     PNNL_MW = PNNL_MWh / n_hours
   ) %>%
-  # filter(PNNL_MW > nameplate_MW) %>%
+  left_join(eia_missing, by = join_by(eia_id, EHA_PtID, year, month)) %>%
+  mutate(imputed = ifelse(is.na(imputed), FALSE, imputed)) %>%
   select(
     EIA_ID = eia_id,
     EHA_PtID,
@@ -280,7 +283,8 @@ combined_data_with_PNNL_calcs %>%
     EIA_obs_freq = freq,
     hydro923plus_fraction = fraction,
     hydro923plus_MWh = PNNL_MWh,
-    hydro923plus_method = f_type
+    hydro923plus_method = f_type,
+    smoothed, scaled, imputed
   ) %>%
   arrange(EHA_PtID, year, month) %>%
   tidyr::replace_na(list(hydro923plus_method = "NO FLOW DATA")) %>%
