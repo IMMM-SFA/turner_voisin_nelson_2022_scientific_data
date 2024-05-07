@@ -1,7 +1,8 @@
 ## 2a. Prepare data to disaggregate annual hydropower using reservoir releases from ResOpsUS
 ## Author: Sean Turner sean.turner@pnnl.gov
 ## Hydrosource (HILLARI) data downloaded from https://doi.org/10.21951/HILARRI/1781642 (2022-03-17)
-## 2023 Update - Cameron Bracken cameron.bracken@pnnl.gov
+## 2023 1.2.1 Update - Cameron Bracken cameron.bracken@pnnl.gov
+## 2024 1.3.0 Update - Cameron Bracken cameron.bracken@pnnl.gov
 
 library(starfit) # read ResOpsUS data
 library(tidyverse)
@@ -154,7 +155,15 @@ release_based_fractions <- gauge_flow_fraction |>
     !is.na(fraction.y) ~ fraction.y,
     .default = NA
   )) |>
-  select(-fraction.x, -fraction.y)
+  select(-fraction.x, -fraction.y) |>
+  group_by(eha_ptid, year) |>
+  # fix for a year of all 0 fractions
+  mutate(
+    fraction = if_else(fraction == 0, 0.005, fraction),
+    fraction = fraction / sum(fraction),
+    month = month.abb[month]
+  )
+
 
 release_based_fractions %>%
   write_csv("Output_2a_release_fractions.csv")
