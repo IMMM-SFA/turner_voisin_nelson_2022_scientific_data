@@ -2,12 +2,13 @@
 
 # RectifHyd—monthly generation estimates for 1,500 hydroelectric power plants in the United States
 
-Cameron Bracken<sup>1\*</sup>, Nathalie Voisin<sup>1</sup>, and Kristian
-Nelson<sup>1</sup>
+Sean Turner<sup>1\*</sup>, Cameron Bracken<sup>2\*</sup>, Nathalie Voisin<sup>2</sup>, and Kristian
+Nelson<sup>2</sup>
 
-<sup>1 </sup> Pacific Northwest National Laboratory
+<sup>1 </sup> Oak Ridge National Laboratory
+<sup>2 </sup> Pacific Northwest National Laboratory
 
-\* Contacts: <cameron.bracken@pnnl.gov> <nathalie.voisin@pnnl.gov>
+\* Contacts: <turnersw@ornl.gov> <cameron.bracken@pnnl.gov> <nathalie.voisin@pnnl.gov>
 
 ## Abstract
 
