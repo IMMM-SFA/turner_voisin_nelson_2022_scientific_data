@@ -1,15 +1,23 @@
 ## 3. Combine flow fraction tables and perform disaggregation of annual to monthly flow
 ## Author: Sean Turner sean.turner@pnnl.gov
-## 2023 Update - Cameron Bracken cameron.bracken@pnnl.gov
+## 2023 1.2.1 Update - Cameron Bracken cameron.bracken@pnnl.gov
+## 2024 1.3.0 Update - Cameron Bracken cameron.bracken@pnnl.gov
 
 library(tidyverse)
 library(viridis)
+library(missRanger)
+
+options(
+  readr.show_progress = FALSE,
+  readr.show_col_types = FALSE,
+  pillar.width = 1e6
+)
 
 # year of the latest EIA data to use
 end_year <- 2022
 
-# get hours per month for converting MWh to MW average
-tibble(date = seq(ISOdate(2001, 1, 1), to = ISOdate(end_year, 12, 31), by = "day")) %>%
+# hours per month for converting MWh to MW average
+hours_per_month <- tibble(date = seq(ISOdate(2001, 1, 1), to = ISOdate(end_year, 12, 31), by = "day")) %>%
   mutate(
     date = lubridate::date(date),
     year = lubridate::year(date),
@@ -21,27 +29,17 @@ tibble(date = seq(ISOdate(2001, 1, 1), to = ISOdate(end_year, 12, 31), by = "day
   mutate(n_hours = n_days * 24) %>%
   left_join(tibble(month = 1:12, month_abb = month.abb), by = "month") %>%
   mutate(month = factor(month_abb, levels = month.abb)) %>%
-  select(year, month, n_hours) -> hours_per_month
+  select(year, month, n_hours)
 
-expand.grid(
+year_month_seq <- expand.grid(
   year = 2001:end_year,
   month = factor(month.abb, levels = month.abb, ordered = T)
-) ->
-year_month_seq
-
-read_csv("Output_2b_huc4_fractions_xSpill.csv",
-  col_types = c(
-    "eha_ptid" = "c",
-    "year" = "i",
-    "month" = "c",
-    "fraction" = "d"
-  )
-) ->
-huc4_based_fractions
+)
 
 
-
-read_csv("Output_2a_release_fractions_xSpill.csv",
+# disag fractions based on actual turbine release
+# these are preferred where available
+read_csv("Output_2a_release_fractions.csv",
   col_types = c(
     "eha_ptid" = "c",
     "year" = "i",
@@ -51,10 +49,31 @@ read_csv("Output_2a_release_fractions_xSpill.csv",
 ) ->
 release_based_fractions
 
-# fill out missing years in release based fractions using huc_4 based fractions
+# disag fractions based on huc4 flows,
+# these are a fallback if release based fractions are not available
+read_csv("Output_2b_huc4_fractions.csv",
+  col_types = c(
+    "eha_ptid" = "c",
+    "year" = "i",
+    "month" = "c",
+    "fraction" = "d"
+  )
+) ->
+huc4_based_fractions
 
+# eia_id, nameplate_MW
+# 253, 3.1, http://www.kilarc.info/Pictures/Kilarc%20Powerhouse/Photos_For_Kilarc_Powerhouse.htm
+# 262, 25.5, https://en.wikipedia.org/wiki/Narrows_Dam
+# 293, 128, https://en.wikipedia.org/wiki/Wishon_Dam
+# 437, 644, https://hydroreform.org/hydro-project/edward-c-hyatt-p-2100/
+
+
+
+# fill out missing years in release based fractions using huc_4 based fractions
+# CB May 2023 We used imputation to fill in this data so this code is obsolete
+# leaving it in as a chack, no ids should be printed out
 release_based_fractions %>%
-  split(.$eha_ptid) %>% # .[[20]] -> plant
+  split(.$eha_ptid) %>% # .[[270]] -> plant
   map_dfr(function(plant) {
     plant %>%
       split(.$year) %>% # .[[20]] -> yr
@@ -62,6 +81,7 @@ release_based_fractions %>%
         if (!any(is.na(yr[["fraction"]]))) {
           return(yr %>% mutate(f_type = "release"))
         }
+        message(yr$eha_ptid[1])
 
         huc4_based_fractions %>%
           filter(
@@ -76,38 +96,60 @@ release_based_fractions %>%
   }) ->
 release_huc4_mix
 
-release_huc4_mix %>% filter(eha_ptid == "hc0115_p01")
-
 huc4_based_fractions %>%
   filter(!(eha_ptid %in% release_huc4_mix[["eha_ptid"]])) %>%
   mutate(f_type = "huc4") %>%
-  bind_rows(release_huc4_mix) -> all_fractions
+  bind_rows(release_huc4_mix) ->
+all_fractions
 
-# read in annual EIA data
-read_csv("Output_1_EIA_MWh.csv") %>%
-  filter(netgen_annual != 0) %>%
-  gather(month, EIA_MWh, -eia_id, -year, -freq, -plant, -EHA_PtID, -state, -nameplate_MW, -netgen_annual) %>%
-  mutate(month = str_to_title(substr(month, 8, 10))) %>%
+# raw eia data with NAs
+eia_raw <- read_csv("Output_1_EIA_MWh.csv")
+
+eia_missing <- eia_raw |>
+  pivot_longer(-c(eia_id, EHA_PtID, year, plant, state, nameplate_MW, freq, netgen_annual)) |>
+  filter(is.na(value)) |>
+  select(eia_id, EHA_PtID, year, month = name) |>
+  mutate(imputed = TRUE)
+
+month_num <- 1:12 |> `names<-`(month.abb)
+
+# impute all missing monthly values
+eia_imputed_values <- eia_raw |>
+  select(eia_id, year, nameplate_MW, all_of(month.abb)) |>
+  pivot_longer(-c(eia_id, year, nameplate_MW), names_to = "month") |>
+  mutate(month = month_num[month]) |>
+  pivot_wider(id_cols = c(year, month), names_from = eia_id) |>
+  missRanger() |>
+  pivot_longer(-c(year, month), names_to = "eia_id") |>
+  mutate(month = month.abb[month]) |>
+  pivot_wider(id_cols = c(year, eia_id), names_from = month) |>
+  mutate(netgen_annual = Jan + Feb + Mar + Apr + May + Jun + Jul + Aug + Sep + Oct + Nov + Dec)
+
+eia_imputed <- eia_raw |>
+  select(-all_of(month.abb), -netgen_annual) |>
+  inner_join(eia_imputed_values |> mutate(eia_id = as.numeric(eia_id)),
+    by = join_by(eia_id, year)
+  )
+
+
+EIA_data <- eia_imputed %>%
+  # filter(netgen_annual != 0) %>%
+  pivot_longer(
+    cols = -c(eia_id, year, freq, plant, EHA_PtID, state, nameplate_MW, netgen_annual),
+    names_to = "month", values_to = "EIA_MWh"
+  ) |>
+  # mutate(month = str_to_title(substr(month, 8, 10))) %>%
+  # filter(EIA_MWh > 0) %>%
   arrange(year, month) %>%
   left_join(hours_per_month, c("year", "month")) %>%
   group_by(eia_id, year) %>%
   mutate(EIA_fraction = EIA_MWh / sum(EIA_MWh)) %>%
-  ungroup() ->
-EIA_data
-
-# FIX FOR CASES WHERE EIA IS DUPLICATED IN HYDROSOURCE
-EIA_data %>%
-  count(eia_id, year) %>%
-  filter(n > 12) %>%
-  pull(eia_id) %>%
-  unique() ->
-remove_eia_HS_duplicates
+  ungroup()
 
 
 ### NEED TO GO BACK TO PART 2a/b TO CHECK CASES WHERE THE FRACTION IS NA FOR SEVERAL MONTHS (e.g., EIA_ID == 16)
 
 EIA_data %>%
-  filter(!(eia_id %in% remove_eia_HS_duplicates)) %>%
   left_join(all_fractions, by = c("year", "month", "EHA_PtID" = "eha_ptid")) %>%
   mutate(fraction = if_else(is.na(fraction), EIA_fraction, fraction)) %>%
   replace_na(list(fraction = 0, freq = "not noted", EIA_MWh = 0)) %>%
@@ -125,34 +167,46 @@ EIA_data %>%
     PNNL_MW = PNNL_MWh / n_hours,
     EIA_MW = EIA_MWh / n_hours
   ) %>% # .[] -> combined_data_with_PNNL_calcs
+  group_by(eia_id, year) |>
+  # some plants have generation and nameplate vales that dont line up
+  # so assume the nameplate is bad
+  # mutate(nameplate_MW = ifelse(nameplate_MW max(EIA_MW))) %>%
   filter(!state %in% c("AK", "HI")) %>%
-  # mutate(eia_plant = paste0(eia_id, plant)) %>%
-  # filter(eia_id == 48, year == 2020) -> x_yr
   split(.$eia_id) %>% # .[[8]] -> x
   map_dfr(function(x) {
     x %>% split(.$year) %>% # .[[13]] -> x_yr
       map_dfr(function(x_yr) {
-
-        # message(unique(x$eia_id))
-        # message(unique(x_yr$year))
-
+        #
         smoothed <- FALSE
-
+        scaled <- FALSE
         counter <- 0
 
+        message(unique(x$eia_id), " ", unique(x_yr$year))
+        # we apply a loess smoothing spline to the provisional allocation factors
+        # (low degree of smoothing; span = 0.2), repeating until generation is more
+        # reasonable with nameplate capacity not exceeded and no monthly factor
+        # greater than 0.25, which would imply a quarter of annual generation
+        # occurring in a single month. This threshold was selected based on an
+        # analysis of existing monthly generating data across observed plants
+        # (0.25 is very rarely exceeded). Final adjusted factors are then multiplied
+        # by observed annual generation to create a rectified set of monthly generation
+        # estimates that sum to observed annual generation at each plant.
         repeat{
-          max(x_yr[["fraction"]]) -> max_fraction
-          any(x_yr[["PNNL_MW"]] > (x_yr[["nameplate_MW"]])) -> np_test
+          max_fraction <- max(x_yr[["fraction"]])
+          np_test <- any(x_yr[["PNNL_MW"]] > (x_yr[["nameplate_MW"]]))
 
           counter <- counter + 1
 
           if (max_fraction > 0.25 | np_test == TRUE) {
+            # browser()
             smoothed <- TRUE
 
-            message(unique(x$eia_id))
-            message(unique(x_yr$year))
-            # message(counter)
+            # if (counter == 1) message("Smoothing fractions")
 
+            # message(counter)
+            if (nrow(x_yr) < 12) browser()
+
+            # stick together the same year on the back and the front for smoothing
             bind_rows(x_yr, x_yr, x_yr) %>%
               mutate(
                 mth = 1:36,
@@ -169,26 +223,36 @@ EIA_data %>%
           }
 
           if (counter >= 50) {
+            # bail out if the smoothing is taking too long
+            # browser()
+            message("Scaling monthly distribution")
             x_yr %>%
               mutate(fraction = 1 / 12) %>%
-              mutate(PNNL_MWh = fraction * netgen_annual, PNNL_MW = PNNL_MWh / n_hours) -> x_yr
+              # mutate(PNNL_MWh = fraction * netgen_annual, PNNL_MW = PNNL_MWh / n_hours) -> x_yr
+              # instead of assigning a flat profile, shift the monthly distribution down so the max
+              # is the nameplate capacity, preserving the monthly shape,
+              # this happens only rarely
+              mutate(
+                PNNL_MW = fraction * netgen_annual / n_hours,
+                PNNL_MWh = PNNL_MW / max(PNNL_MW) * nameplate_MW * n_hours,
+                PNNL_MW = PNNL_MWh / n_hours
+              ) -> x_yr
+            scaled <- TRUE
           }
 
 
-          if ((!max(x_yr[["fraction"]]) > 0.25 & !any(x_yr[["PNNL_MW"]] > (x_yr[["nameplate_MW"]]))) | counter >= 50) {
+          if ((!max(x_yr[["fraction"]]) > 0.25 &
+            !any(x_yr[["PNNL_MW"]] > (x_yr[["nameplate_MW"]]))) |
+            counter >= 50) {
+            # message("Counter: ", counter)
             break
           }
         }
 
-        return(x_yr %>% mutate(smoothed = !!smoothed))
+        return(x_yr %>% mutate(smoothed = !!smoothed, scaled = !!scaled))
       })
   }) -> combined_data_with_PNNL_calcs
 
-
-
-combined_data_with_PNNL_calcs %>%
-  filter(eia_id == 57690, year == 2015) %>%
-  pull(plant)
 
 combined_data_with_PNNL_calcs %>%
   filter(
@@ -199,12 +263,14 @@ combined_data_with_PNNL_calcs %>%
   unique() -> recommended_EIA_switch
 
 combined_data_with_PNNL_calcs %>%
+  ungroup() %>%
   # correct for smoothed factors
   mutate(
     PNNL_MWh = netgen_annual * fraction,
     PNNL_MW = PNNL_MWh / n_hours
   ) %>%
-  # filter(PNNL_MW > nameplate_MW) %>%
+  left_join(eia_missing, by = join_by(eia_id, EHA_PtID, year, month)) %>%
+  mutate(imputed = ifelse(is.na(imputed), FALSE, imputed)) %>%
   select(
     EIA_ID = eia_id,
     EHA_PtID,
@@ -217,7 +283,8 @@ combined_data_with_PNNL_calcs %>%
     EIA_obs_freq = freq,
     hydro923plus_fraction = fraction,
     hydro923plus_MWh = PNNL_MWh,
-    hydro923plus_method = f_type
+    hydro923plus_method = f_type,
+    smoothed, scaled, imputed
   ) %>%
   arrange(EHA_PtID, year, month) %>%
   tidyr::replace_na(list(hydro923plus_method = "NO FLOW DATA")) %>%
@@ -239,7 +306,7 @@ combined_data_with_PNNL_calcs %>%
 
 hydro923plus %>%
   count(year) %>%
-  tail()
+  print(n = 30)
 
 hydro923plus %>%
   write_csv("RectifHydv1.0_Q90_Spill_smoothed_SMOOTH_update_2022.csv")
