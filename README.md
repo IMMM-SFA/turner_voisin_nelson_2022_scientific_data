@@ -1,14 +1,15 @@
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8422075.svg)](https://doi.org/10.5281/zenodo.8422075)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11584567.svg)](https://doi.org/10.5281/zenodo.11584567)
 
 # RectifHyd—monthly generation estimates for 1,500 hydroelectric power plants in the United States
 
-Sean Turner<sup>1\*</sup>, Cameron Bracken<sup>2\*</sup>, Nathalie Voisin<sup>2</sup>, and Kristian
-Nelson<sup>2</sup>
+Sean Turner<sup>1</sup>, Nathalie Voisin<sup>2\*</sup>, and Kristian
+Nelson<sup>2</sup>, Cameron Bracken<sup>2\*</sup>
 
-<sup>1 </sup> Oak Ridge National Laboratory
-<sup>2 </sup> Pacific Northwest National Laboratory
+<sup>1 </sup> Oakridge National Laboratory <sup>1 </sup> Pacific
+Northwest National Laboratory
 
-\* Contacts: <turnersw@ornl.gov> <cameron.bracken@pnnl.gov> <nathalie.voisin@pnnl.gov>
+\* Contacts: <turnersw@ornl.gov> <cameron.bracken@pnnl.gov>
+<nathalie.voisin@pnnl.gov>
 
 ## Abstract
 
@@ -36,25 +37,26 @@ hydropower availability in power grid operation and expansion models.
 
 ## Journal reference
 
-Turner, S.W.D., Voisin, N., and Nelson, K. (202X). RectifHyd—monthly
+Turner, S.W.D., Voisin, N. & Nelson, K. Revised monthly energy
 generation estimates for 1,500 hydroelectric power plants in the United
-States. (In prep.)
+States. Sci Data 9, 675 (2022).
+<https://doi.org/10.1038/s41597-022-01748-x>
 
 ## Data reference
 
-Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2023). RectifHyd
-(1.2.0) \[Data set\]. Zenodo. <https://doi.org/10.5281/zenodo.8422075>
+Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2024). RectifHyd
+(1.3) \[Data set\]. Zenodo. <https://doi.org/10.5281/zenodo.11584567>
 
 ### Data download
 
 In R:
 
-    readr::read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
+    readr::read_csv("https://zenodo.org/records/11584567/files/RectifHyd_v1.3.csv")
 
 In Python:
 
     import pandas as pd
-    pd.read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
+    pd.read_csv("https://zenodo.org/records/11584567/files/RectifHyd_v1.3.csv")
 
 ### Reproduce RectifHyd
 
@@ -82,7 +84,7 @@ In Python:
     \[<http://waterdata.usgs.gov/nwis/>\].
 
 1.  Run the following R scripts in the main directory to re-create this
-    experiment:
+    dataset:
 
 <table>
 <colgroup>
@@ -97,27 +99,33 @@ In Python:
 </thead>
 <tbody>
 <tr class="odd">
-<td><code>1. Process EIA spreadsheets.R</code></td>
+<td><code>1a. Process EIA spreadsheets.R</code></td>
 <td>Combine each of the last 20 years’ <code>EIA-923</code> data
 releases, extract hydropower net generation, output clean data table as
 .csv</td>
 </tr>
 <tr class="even">
-<td><code>2a Disaggregate using ResOpsUS.R</code></td>
+<td><code>1b. Download gauge flow.R</code></td>
+<td>Combine each of the last 20 years’ <code>EIA-923</code> data
+releases, extract hydropower net generation, output clean data table as
+.csv</td>
+</tr>
+<tr class="odd">
+<td><code>2a Disaggregate using release.R</code></td>
 <td>Prepare data to disaggregate annual hydropower using reservoir
 releases from <code>ResOpsUS</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>2b Disaggregate using USGS.R</code></td>
 <td>Prepare data to disaggregate annual hydropower using downstream
 flows</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>3. Combine and compute new monthly generation.R</code></td>
 <td>Combine flow fraction tables and perform disaggregation of annual to
 monthly flow</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>4a. Create final file.R</code></td>
 <td>Clean up and prepare the final RectifHyd file</td>
 </tr>
