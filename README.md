@@ -5,7 +5,7 @@
 Sean Turner<sup>1</sup>, Nathalie Voisin<sup>2\*</sup>, and Kristian
 Nelson<sup>2</sup>, Cameron Bracken<sup>2\*</sup>
 
-<sup>1 </sup> Oakridge National Laboratory <sup>1 </sup> Pacific
+<sup>1 </sup> Oakridge National Laboratory <sup>2 </sup> Pacific
 Northwest National Laboratory
 
 \* Contacts: <turnersw@ornl.gov> <cameron.bracken@pnnl.gov>
