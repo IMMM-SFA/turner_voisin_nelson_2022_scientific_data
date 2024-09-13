@@ -6,17 +6,18 @@ output: md_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8422075.svg)](https://doi.org/10.5281/zenodo.8422075)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11584567.svg)](https://doi.org/10.5281/zenodo.11584567)
+
 
 
 # RectifHyd---monthly generation estimates for 1,500 hydroelectric power plants in the United States
 
-Sean Turner<sup>1</sup>, Nathalie Voisin<sup>1\*</sup>, and Kristian Nelson<sup>1</sup>, Cameron Bracken<sup>1\*</sup>
+Sean Turner<sup>1</sup>, Nathalie Voisin<sup>2\*</sup>, and Kristian Nelson<sup>2</sup>, Cameron Bracken<sup>2\*</sup>
 
 <sup>1 </sup> Oakridge National Laboratory
-<sup>1 </sup> Pacific Northwest National Laboratory
+<sup>2 </sup> Pacific Northwest National Laboratory
 
-\* Contacts: cameron.bracken@pnnl.gov nathalie.voisin@pnnl.gov
+\* Contacts: turnersw@ornl.gov cameron.bracken@pnnl.gov nathalie.voisin@pnnl.gov
 
 ## Abstract
 The U.S. Energy Information Administration conducts an annual survey (form EIA-923) to collect, among other variables, annual and monthly net generation for more than ten thousand U.S. power plants. Only ~10% of the ~1,500 hydroelectric plants included in this regular data release come with observations of monthly net generation; the remaining 90% of plants are represented with monthly net generation that is imputed using a statistical method. The imputation method neglects local hydrology and reservoir operations, rendering the monthly generation data unsuitable for several research applications. Here we present an alternative approach to disaggregate each plant’s reported annual generation using historical reservoir releases (~180 plants) or, for the majority of cases where reservoir releases are unavailable, river discharge recorded downstream of each dam (~1180 plants). We evaluate the approach using 130 plants for which monthly generation observations are available, showing median Kling Gupta Efficiency (KGE) of 0.74, 90% CI [-0.07, 0.93] across plants with observed reservoir release, and KGE of 0.51 [-0.28, 0.79] for cases imputed using a downstream flow gage. The new dataset—named RectifHyd—provides a timely alternative to EIA-923 for U.S. scale, plant-level, hydropower net generation for analyzing within-year hydropower generation behavior and constraining sub-annual hydropower availability in power grid operation and expansion models. 
@@ -25,7 +26,7 @@ The U.S. Energy Information Administration conducts an annual survey (form EIA-9
 Turner, S.W.D., Voisin, N. & Nelson, K. Revised monthly energy generation estimates for 1,500 hydroelectric power plants in the United States. Sci Data 9, 675 (2022). https://doi.org/10.1038/s41597-022-01748-x
 
 ## Data reference
-Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2023). RectifHyd (1.2.0) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.8422075
+Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2024). RectifHyd (1.3) [Data set]. Zenodo. https://doi.org/10.5281/zenodo.11584567
 
 
 ### Data download
@@ -33,13 +34,13 @@ Turner, S., Voisin, N., Nelson, K., & Bracken, C. (2023). RectifHyd (1.2.0) [Dat
 In R:
 
 ```{r, eval = F}
-readr::read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
+readr::read_csv("https://zenodo.org/records/11584567/files/RectifHyd_v1.3.csv")
 ```
 
 In Python:
 ```{python, eval = F}
 import pandas as pd
-pd.read_csv("https://zenodo.org/record/10011017/files/RectifHyd_v1.2.1.csv")
+pd.read_csv("https://zenodo.org/records/11584567/files/RectifHyd_v1.3.csv")
 ```
 
 
